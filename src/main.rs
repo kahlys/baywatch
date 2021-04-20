@@ -21,7 +21,7 @@ async fn main() {
 
     // testing bollard to run container and wait for it to finish
 
-    println!("Pulling image");
+    println!("\nPulling image");
     docker
         .create_image(
             Some(CreateImageOptions {
@@ -39,7 +39,6 @@ async fn main() {
         println!("\nCPU count : {}", x);
 
         // starting container
-        println!("Starting container");
         let config = Config {
             image: Some(IMAGE),
             cmd: Some(vec!["sleep", "$(nproc)"]),
