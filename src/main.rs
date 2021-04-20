@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use bollard::container::{Config, RemoveContainerOptions, WaitContainerOptions};
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
@@ -32,6 +34,9 @@ async fn main() {
         .await
         .unwrap();
 
+    // starting container
+    let start = Instant::now();
+
     println!("Starting container");
     let config = Config {
         image: Some(IMAGE),
@@ -59,6 +64,9 @@ async fn main() {
         .try_collect::<Vec<_>>()
         .await
         .unwrap();
+
+    let duration = start.elapsed();
+    println!("Duration : {:?}", duration);
 
     // remove container
 
