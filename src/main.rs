@@ -1,9 +1,10 @@
-use std::time::{Duration, Instant};
-
-use bollard::container::{Config, RemoveContainerOptions, WaitContainerOptions};
+use bollard::container::{
+    Config, RemoveContainerOptions, UpdateContainerOptions, WaitContainerOptions,
+};
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use futures_util::TryStreamExt;
+use std::time::Instant;
 
 const IMAGE: &'static str = "ubuntu:latest";
 
@@ -34,50 +35,89 @@ async fn main() {
         .await
         .unwrap();
 
-    // starting container
-    let start = Instant::now();
+    for x in (1..(host_ncpu + 1)).rev() {
+        println!("\nCPU count : {}", x);
 
-    println!("Starting container");
-    let config = Config {
-        image: Some(IMAGE),
-        cmd: Some(vec!["sleep", "5"]),
-        ..Default::default()
-    };
+        // starting container
+        println!("Starting container");
+        let config = Config {
+            image: Some(IMAGE),
+            cmd: Some(vec!["sleep", "$(nproc)"]),
+            ..Default::default()
+        };
 
-    let id = docker
-        .create_container::<&str, &str>(None, config)
-        .await
-        .unwrap()
-        .id;
+        let id = docker
+            .create_container::<&str, &str>(None, config)
+            .await
+            .unwrap()
+            .id;
 
-    docker.start_container::<String>(&id, None).await.unwrap();
+        docker
+            .update_container(
+                &id,
+                UpdateContainerOptions::<String> {
+                    cpuset_cpus: Some(cpu_shares(x)),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
 
-    // wait to finish
+        let start = Instant::now();
+        docker.start_container::<String>(&id, None).await.unwrap();
 
-    docker
-        .wait_container(
-            &id,
-            Some(WaitContainerOptions {
-                condition: "not-running",
-            }),
-        )
-        .try_collect::<Vec<_>>()
-        .await
-        .unwrap();
+        // wait to finish
 
-    let duration = start.elapsed();
-    println!("Duration : {:?}", duration);
+        docker
+            .wait_container(
+                &id,
+                Some(WaitContainerOptions {
+                    condition: "not-running",
+                }),
+            )
+            .try_collect::<Vec<_>>()
+            .await
+            .unwrap();
 
-    // remove container
+        let duration = start.elapsed();
+        println!("Duration : {:?}", duration);
 
-    docker
-        .remove_container(
-            &id,
-            Some(RemoveContainerOptions {
-                force: true,
-                ..Default::default()
-            }),
-        )
-        .await
-        .unwrap();
+        // remove container
+
+        docker
+            .remove_container(
+                &id,
+                Some(RemoveContainerOptions {
+                    force: true,
+                    ..Default::default()
+                }),
+            )
+            .await
+            .unwrap();
+    }
+}
+
+fn cpu_shares(count: i64) -> String {
+    match count {
+        c if c < 1 => panic!("cpu count must be a positive number"),
+        c if c == 1 => "0".to_string(),
+        _ => format!("0-{}", count - 1),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cpu_shares() {
+        assert_eq!("0".to_string(), cpu_shares(1));
+        assert_eq!("0-4".to_string(), cpu_shares(5));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_cpu_shares_panic() {
+        cpu_shares(-1);
+    }
 }
