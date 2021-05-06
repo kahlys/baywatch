@@ -6,7 +6,7 @@ use bollard::Docker;
 use futures_util::TryStreamExt;
 use std::time::Instant;
 
-const IMAGE: &'static str = "ubuntu:latest";
+const IMAGE: &str = "ubuntu:latest";
 
 #[tokio::main]
 async fn main() {
