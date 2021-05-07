@@ -42,7 +42,7 @@ async fn main() {
         // starting container
         let config = Config {
             image: Some(IMAGE),
-            cmd: Some(vec!["sleep", "$(nproc)"]),
+            cmd: Some(vec!["bash", "-c", "sleep $(nproc)"]),
             ..Default::default()
         };
 
