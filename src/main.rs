@@ -84,10 +84,8 @@ async fn main() {
             .unwrap();
         let container_info = container_info.state.unwrap();
         let start = container_info.started_at.unwrap();
-        let end = container_info.finished_at.unwrap();
-        println!("container info : \n{} to {}", start, end);
-
         let start = DateTime::parse_from_rfc3339(start.as_str()).unwrap();
+        let end = container_info.finished_at.unwrap();
         let end = DateTime::parse_from_rfc3339(end.as_str()).unwrap();
 
         let diff = end.signed_duration_since(start);
