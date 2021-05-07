@@ -23,6 +23,7 @@ name = "baywatch"
 version = "0.1.0"
 dependencies = [
  "bollard",
+ "chrono",
  "futures-util",
  "tokio",
 ]
