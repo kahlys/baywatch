@@ -6,23 +6,24 @@ use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use chrono::DateTime;
 use futures_util::TryStreamExt;
+#[macro_use]
+extern crate prettytable;
+use prettytable::{format, Table};
 
 const IMAGE: &str = "ubuntu:latest";
 
 #[tokio::main]
 async fn main() {
     let docker = Docker::connect_with_local_defaults().unwrap();
-
     let d_info = docker.info().await.unwrap();
-
     let host_ncpu = d_info.ncpu.unwrap();
     let host_memory = d_info.mem_total.unwrap();
-    println!("Host NCPU     : {:?}", host_ncpu);
-    println!("Host MemTotal : {:?}", host_memory);
 
-    // testing bollard to run container and wait for it to finish
+    println!("Docker infos");
+    println!("host ncpu : {:?}", host_ncpu);
+    println!("host memtotal : {:?}\n", host_memory);
 
-    println!("\nPulling image");
+    // pulling image
     docker
         .create_image(
             Some(CreateImageOptions {
@@ -36,9 +37,9 @@ async fn main() {
         .await
         .unwrap();
 
+    let mut table = Table::new();
+    table.add_row(row!["CPU", "DURATION (ms)",]);
     for x in (1..(host_ncpu + 1)).rev() {
-        println!("\nCPU count : {}", x);
-
         // starting container
         let config = Config {
             image: Some(IMAGE),
@@ -89,7 +90,7 @@ async fn main() {
         let end = DateTime::parse_from_rfc3339(end.as_str()).unwrap();
 
         let diff = end.signed_duration_since(start);
-        println!("diff : {}", diff);
+        table.add_row(row![x, diff.num_milliseconds(),]);
 
         // remove container
         docker
@@ -103,6 +104,7 @@ async fn main() {
             .await
             .unwrap();
     }
+    table.printstd();
 }
 
 fn cpu_shares(count: i64) -> String {
