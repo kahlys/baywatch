@@ -1,10 +1,11 @@
 use bollard::container::{
-    Config, RemoveContainerOptions, UpdateContainerOptions, WaitContainerOptions,
+    Config, InspectContainerOptions, RemoveContainerOptions, UpdateContainerOptions,
+    WaitContainerOptions,
 };
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
+use chrono::DateTime;
 use futures_util::TryStreamExt;
-use std::time::Instant;
 
 const IMAGE: &str = "ubuntu:latest";
 
@@ -62,11 +63,9 @@ async fn main() {
             .await
             .unwrap();
 
-        let start = Instant::now();
         docker.start_container::<String>(&id, None).await.unwrap();
 
         // wait to finish
-
         docker
             .wait_container(
                 &id,
@@ -78,11 +77,23 @@ async fn main() {
             .await
             .unwrap();
 
-        let duration = start.elapsed();
-        println!("Duration : {:?}", duration);
+        // get stats
+        let container_info = docker
+            .inspect_container(&id, Some(InspectContainerOptions { size: false }))
+            .await
+            .unwrap();
+        let container_info = container_info.state.unwrap();
+        let start = container_info.started_at.unwrap();
+        let end = container_info.finished_at.unwrap();
+        println!("container info : \n{} to {}", start, end);
+
+        let start = DateTime::parse_from_rfc3339(start.as_str()).unwrap();
+        let end = DateTime::parse_from_rfc3339(end.as_str()).unwrap();
+
+        let diff = end.signed_duration_since(start);
+        println!("diff : {}", diff);
 
         // remove container
-
         docker
             .remove_container(
                 &id,
