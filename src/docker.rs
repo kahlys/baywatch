@@ -14,7 +14,7 @@ pub async fn run_container(
     docker: &bollard::Docker,
     image: &str,
     cpu: i64,
-) -> Result<i64, Error> {
+) -> Result<(i64,i64), Error> {
     // starting container
     let id = docker
         .create_container::<&str, &str>(
@@ -81,7 +81,7 @@ pub async fn run_container(
         .await
         .map_err(|e| Error::DockerError(format!("remove container : {:?}", e)))?;
 
-    Ok(diff.num_milliseconds())
+    Ok((cpu,diff.num_milliseconds()))
 }
 
 fn cpu_shares(count: i64) -> String {

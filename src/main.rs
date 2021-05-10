@@ -6,6 +6,8 @@ use clap::{App, Arg};
 use prettytable::Table;
 use std::fs::File;
 
+use futures::future::join_all;
+
 mod docker;
 
 #[tokio::main]
@@ -41,9 +43,14 @@ async fn main() {
 
     let mut table = Table::new();
     table.add_row(row!["CPU", "DURATION (ms)",]);
-    for x in (1..(host_ncpu + 1)).rev() {
-        let diff = docker::run_container(&docker, image, x).await.unwrap();
-        table.add_row(row![x, diff,]);
+
+    let res =
+        join_all((1..(host_ncpu + 1)).map(|x| docker::run_container(&docker, image, x))).await;
+
+    for r in res.iter() {
+        if let Ok(r) = r {
+            table.add_row(row![r.0, r.1,]);
+        }
     }
     table.printstd();
 
