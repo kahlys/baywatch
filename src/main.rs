@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate prettytable;
+
 use bollard::container::{
     Config, InspectContainerOptions, RemoveContainerOptions, UpdateContainerOptions,
     WaitContainerOptions,
@@ -5,15 +8,25 @@ use bollard::container::{
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use chrono::DateTime;
+use clap::{App, Arg, SubCommand};
 use futures_util::TryStreamExt;
-#[macro_use]
-extern crate prettytable;
 use prettytable::{format, Table};
+use std::fs::File;
+use std::io::{BufRead, BufReader, Error, Write};
 
 const IMAGE: &str = "ubuntu:latest";
 
 #[tokio::main]
 async fn main() {
+    let matches = App::new("Baywatch")
+        .arg(
+            Arg::with_name("output")
+                .short("o")
+                .long("output")
+                .takes_value(true)
+                .help("Output CSV file"),
+        )
+        .get_matches();
     let docker = Docker::connect_with_local_defaults().unwrap();
     let d_info = docker.info().await.unwrap();
     let host_ncpu = d_info.ncpu.unwrap();
@@ -105,6 +118,11 @@ async fn main() {
             .unwrap();
     }
     table.printstd();
+
+    if let Some(o) = matches.value_of("output") {
+        let file = File::create(o).unwrap();
+        table.to_csv(file).unwrap();
+    }
 }
 
 fn cpu_shares(count: i64) -> String {
