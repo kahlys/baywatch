@@ -3,10 +3,9 @@ extern crate prettytable;
 
 use bollard::Docker;
 use clap::{App, Arg};
+use futures::future::join_all;
 use prettytable::Table;
 use std::fs::File;
-
-use futures::future::join_all;
 
 mod docker;
 
@@ -44,8 +43,12 @@ async fn main() {
     let mut table = Table::new();
     table.add_row(row!["CPU", "DURATION (ms)",]);
 
-    let res =
-        join_all((1..(host_ncpu + 1)).rev().map(|x| docker::run_container(&docker, image, x))).await;
+    let res = join_all(
+        (1..(host_ncpu + 1))
+            .rev()
+            .map(|x| docker::run_container(&docker, image, x)),
+    )
+    .await;
 
     for r in res.iter() {
         if let Ok(r) = r {
