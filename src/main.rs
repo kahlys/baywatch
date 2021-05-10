@@ -8,11 +8,10 @@ use bollard::container::{
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use chrono::DateTime;
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg};
 use futures_util::TryStreamExt;
-use prettytable::{format, Table};
+use prettytable::Table;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Error, Write};
 
 const IMAGE: &str = "ubuntu:latest";
 
