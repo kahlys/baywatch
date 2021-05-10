@@ -4,6 +4,7 @@ extern crate prettytable;
 use bollard::Docker;
 use clap::{App, Arg};
 use futures::future::join_all;
+use prettytable::format;
 use prettytable::Table;
 use std::fs::File;
 
@@ -41,8 +42,27 @@ async fn main() {
     println!("host memtotal : {:?}\n", host_memory);
 
     let mut table = Table::new();
-    table.add_row(row!["CPU", "DURATION (ms)",]);
-
+    table.set_format(
+        format::FormatBuilder::new()
+            .column_separator('│')
+            .borders('│')
+            .separator(
+                format::LinePosition::Top,
+                format::LineSeparator::new('─', '┬', '┌', '┐'),
+            )
+            .separator(
+                format::LinePosition::Title,
+                format::LineSeparator::new('─', '┼', '├', '┤'),
+            )
+            .separator(
+                format::LinePosition::Bottom,
+                format::LineSeparator::new('─', '┴', '└', '┘'),
+            )
+            .padding(1, 1)
+            .build(),
+    );
+    
+    table.set_titles(row!["CPU", "DURATION (ms)",]);
     let res = join_all(
         (1..(host_ncpu + 1))
             .rev()
