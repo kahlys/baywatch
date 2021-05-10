@@ -5,7 +5,16 @@ use bollard::container::{
 use chrono::DateTime;
 use futures_util::TryStreamExt;
 
-pub async fn run_container(docker: &bollard::Docker, image: &str, cpu: i64) -> Result<i64, String> {
+#[derive(Debug)]
+pub enum Error {
+    DockerError(String),
+}
+
+pub async fn run_container(
+    docker: &bollard::Docker,
+    image: &str,
+    cpu: i64,
+) -> Result<i64, Error> {
     // starting container
     let id = docker
         .create_container::<&str, &str>(
@@ -17,7 +26,9 @@ pub async fn run_container(docker: &bollard::Docker, image: &str, cpu: i64) -> R
             },
         )
         .await
-        .unwrap()
+        .map_err(|e| {
+            Error::DockerError(format!("create container with image {}: {:?}", image, e))
+        })?
         .id;
 
     docker
@@ -29,9 +40,12 @@ pub async fn run_container(docker: &bollard::Docker, image: &str, cpu: i64) -> R
             },
         )
         .await
-        .unwrap();
+        .map_err(|e| Error::DockerError(format!("update container : {:?}", e)))?;
 
-    docker.start_container::<String>(&id, None).await.unwrap();
+    docker
+        .start_container::<String>(&id, None)
+        .await
+        .map_err(|e| Error::DockerError(format!("start container : {:?}", e)))?;
 
     docker
         .wait_container(
@@ -42,12 +56,13 @@ pub async fn run_container(docker: &bollard::Docker, image: &str, cpu: i64) -> R
         )
         .try_collect::<Vec<_>>()
         .await
-        .unwrap();
+        .map_err(|e| Error::DockerError(format!("wait container : {:?}", e)))?;
 
     let container_info = docker
         .inspect_container(&id, Some(InspectContainerOptions { size: false }))
         .await
-        .unwrap();
+        .map_err(|e| Error::DockerError(format!("inspect container : {:?}", e)))?;
+
     let container_info = container_info.state.unwrap();
     let start = DateTime::parse_from_rfc3339(container_info.started_at.unwrap().as_str()).unwrap();
     let end = DateTime::parse_from_rfc3339(container_info.finished_at.unwrap().as_str()).unwrap();
@@ -64,7 +79,7 @@ pub async fn run_container(docker: &bollard::Docker, image: &str, cpu: i64) -> R
             }),
         )
         .await
-        .unwrap();
+        .map_err(|e| Error::DockerError(format!("remove container : {:?}", e)))?;
 
     Ok(diff.num_milliseconds())
 }
