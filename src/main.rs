@@ -45,7 +45,7 @@ async fn main() {
     table.add_row(row!["CPU", "DURATION (ms)",]);
 
     let res =
-        join_all((1..(host_ncpu + 1)).map(|x| docker::run_container(&docker, image, x))).await;
+        join_all((1..(host_ncpu + 1)).rev().map(|x| docker::run_container(&docker, image, x))).await;
 
     for r in res.iter() {
         if let Ok(r) = r {
