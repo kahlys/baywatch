@@ -21,7 +21,7 @@ pub async fn run_container(
             None,
             Config {
                 image: Some(image),
-                cmd: Some(vec!["bash", "-c", "sleep $(nproc)"]),
+                // cmd: Some(vec!["bash", "-c", "sleep $(nproc)"]),
                 ..Default::default()
             },
         )
