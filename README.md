@@ -6,13 +6,13 @@
 
 1. Build the test docker image:
 
-```sh
+```none
 $ docker build -t myimage testdata
 ```
 
 2. Run `baywatch`:
 
-```sh
+```none
 $ cargo run -- --image myimage
 
 Docker infos
