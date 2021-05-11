@@ -1,5 +1,7 @@
 # baywatch
 
+Profile a containerized workload with various CPU configurations.
+
 ## Usage
 
 ### Get started
