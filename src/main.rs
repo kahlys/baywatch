@@ -37,6 +37,15 @@ async fn main() {
     let host_ncpu = d_info.ncpu.unwrap();
     let host_memory = d_info.mem_total.unwrap();
 
+    println!(
+        "    __                               __       __
+   / /_  ____ ___  ___      ______ _/ /______/ /_
+  / __ \\/ __ `/ / / / | /| / / __ `/ __/ ___/ __ \\
+ / /_/ / /_/ / /_/ /| |/ |/ / /_/ / /_/ /__/ / / /
+/_.___/\\__,_/\\__, / |__/|__/\\__,_/\\__/\\___/_/ /_/
+            /____/"
+    );
+
     println!("Docker infos");
     println!("host ncpu : {:?}", host_ncpu);
     println!("host memtotal : {:?}\n", host_memory);
