@@ -70,7 +70,7 @@ async fn main() {
             .padding(1, 1)
             .build(),
     );
-    
+
     table.set_titles(row!["CPU", "DURATION (ms)",]);
     let res = join_all(
         (1..(host_ncpu + 1))
@@ -79,10 +79,8 @@ async fn main() {
     )
     .await;
 
-    for r in res.iter() {
-        if let Ok(r) = r {
-            table.add_row(row![r.0, r.1,]);
-        }
+    for r in res.iter().flatten() {
+        table.add_row(row![r.0, r.1,]);
     }
     table.printstd();
 
